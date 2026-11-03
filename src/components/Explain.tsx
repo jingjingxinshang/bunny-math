@@ -1,6 +1,7 @@
 import { createContext, Fragment } from 'preact';
 import { useContext, useEffect, useMemo, useState } from 'preact/hooks';
 import { explain, questionText, type Group, type Piece, type Scene } from '../lib/explain';
+import { getT, useLang } from '../lib/i18n';
 import { sounds } from '../lib/sound';
 import type { ExplainStyle } from '../lib/storage';
 import type { Question } from '../lib/types';
@@ -11,9 +12,9 @@ export const ExplainPref = createContext<{ style: ExplainStyle; setStyle: (s: Ex
   setStyle: () => {},
 });
 
-const STYLES: { id: ExplainStyle; label: string }[] = [
-  { id: 'blocks', label: '🧱 Blocks' },
-  { id: 'column', label: '✏️ Columns' },
+const STYLES: { id: ExplainStyle; key: 'blocks' | 'column' }[] = [
+  { id: 'blocks', key: 'blocks' },
+  { id: 'column', key: 'column' },
 ];
 
 /** Turns "*45* is bigger" into highlighted words. */
@@ -100,7 +101,7 @@ function ColumnView({ scene }: { scene: Extract<Scene, { type: 'column' }> }) {
   );
 }
 
-function Stage({ scene }: { scene: Scene }) {
+function Stage({ scene, isZh }: { scene: Scene; isZh: boolean }) {
   if (scene.type === 'array') return <ArrayView scene={scene} />;
   if (scene.type === 'column') return <ColumnView scene={scene} />;
   if (scene.type === 'text') {
@@ -123,14 +124,14 @@ function Stage({ scene }: { scene: Scene }) {
       <div class="legend" aria-hidden="true">
         {hasFlats && (
           <span>
-            <span class="flat" /> = 100
+            <span class="flat" /> {isZh ? '= 100（百）' : '= 100'}
           </span>
         )}
         <span>
-          <span class="rod">{Array.from({ length: 10 }, (_, i) => <i key={i} />)}</span> = 10
+          <span class="rod">{Array.from({ length: 10 }, (_, i) => <i key={i} />)}</span> {isZh ? '= 10（十）' : '= 10'}
         </span>
         <span>
-          <span class="cube" /> = 1
+          <span class="cube" /> {isZh ? '= 1（一）' : '= 1'}
         </span>
       </div>
       {scene.parts.map((p, i) => (p === '+' ? <span key={i} class="plus">+</span> : <Blocks key={i} group={p} />))}
@@ -140,8 +141,11 @@ function Stage({ scene }: { scene: Scene }) {
 }
 
 export function ExplainSheet({ question, onClose }: { question: Question; onClose: () => void }) {
+  const { lang } = useLang();
+  const t = getT(lang);
+  const isZh = lang === 'zh';
   const { style, setStyle } = useContext(ExplainPref);
-  const steps = useMemo(() => explain(question, style), [question, style]);
+  const steps = useMemo(() => explain(question, style, lang), [question, style, lang]);
   const [cur, setCur] = useState(0);
   useEffect(() => setCur(0), [style]);
   const last = cur === steps.length - 1;
@@ -165,10 +169,10 @@ export function ExplainSheet({ question, onClose }: { question: Question; onClos
 
   return (
     <div class="scrim" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div class="sheet" role="dialog" aria-modal="true" aria-label={`How to solve ${questionText(question)}`}>
+      <div class="sheet" role="dialog" aria-modal="true" aria-label={t.howToSolve(questionText(question))}>
         <div class="sheet-head">
           <p class="sheet-title">{questionText(question).replace(/-/g, '−')}</p>
-          <div class="seg style-pick" role="radiogroup" aria-label="Show it with">
+          <div class="seg style-pick" role="radiogroup" aria-label={t.showWith}>
             {STYLES.map((s) => (
               <button
                 key={s.id}
@@ -179,7 +183,7 @@ export function ExplainSheet({ question, onClose }: { question: Question; onClos
                   setStyle(s.id);
                 }}
               >
-                {s.label}
+                {t.explainStyles[s.key]}
               </button>
             ))}
           </div>
@@ -187,21 +191,21 @@ export function ExplainSheet({ question, onClose }: { question: Question; onClos
             ✕
           </button>
         </div>
-        <Stage key={`${style}-${cur}`} scene={steps[Math.min(cur, steps.length - 1)].scene} />
+        <Stage key={`${style}-${cur}-${lang}`} scene={steps[Math.min(cur, steps.length - 1)].scene} isZh={isZh} />
         <p class="caption" aria-live="polite">
           <Highlight text={steps[Math.min(cur, steps.length - 1)].caption} />
         </p>
         <div class="sheet-foot">
-          <div class="steps" aria-label={`Step ${cur + 1} of ${steps.length}`}>
+          <div class="steps" aria-label={t.stepNofTotal(cur + 1, steps.length)}>
             {steps.map((_, i) => (
               <span key={i} class={i === cur ? 'on' : ''} />
             ))}
           </div>
           <button class="puffy" style={{ visibility: cur ? 'visible' : 'hidden' }} onClick={() => go(-1)}>
-            ◀ Back
+            {t.prevStep}
           </button>
           <button class="puffy berry" onClick={() => go(1)}>
-            {last ? 'Got it!' : 'Next ▶'}
+            {last ? t.gotIt : t.nextStep}
           </button>
         </div>
       </div>

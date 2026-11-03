@@ -21,8 +21,8 @@
   --r-lg: 28px;
   --r-md: 20px;
 
-  --display: "Mochiy Pop One", "Baloo 2", system-ui, sans-serif;
-  --body: "Baloo 2", system-ui, sans-serif;
+  --display: "Mochiy Pop One", "Baloo 2", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --body: "Baloo 2", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
 
   color-scheme: light;
 }
@@ -72,6 +72,22 @@ h1, h2, p { margin: 0; }
   border-radius: 50%;
   font-size: 22px;
   padding: 0;
+  --press: 4px;
+}
+.lang-btn {
+  height: 48px;
+  padding: 0 14px;
+  font-size: 15px;
+  font-weight: 800;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
   --press: 4px;
 }
 

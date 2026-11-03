@@ -7,6 +7,7 @@ import { Results, starsFor } from './components/Results';
 import { Stickers } from './components/Stickers';
 import { Worksheet } from './components/Worksheet';
 import { generateQuiz, nextLevel } from './lib/generator';
+import { LangContext } from './lib/i18n';
 import { randomSeed } from './lib/rng';
 import { setSound } from './lib/sound';
 import { load, save, STICKERS, type Saved } from './lib/storage';
@@ -111,5 +112,11 @@ export function App() {
     }
   })();
 
-  return <ExplainPref.Provider value={{ style: saved.explain, setStyle: (explain) => update({ explain }) }}>{body}</ExplainPref.Provider>;
+  return (
+    <LangContext.Provider value={{ lang: saved.lang, setLang: (lang) => update({ lang }) }}>
+      <ExplainPref.Provider value={{ style: saved.explain, setStyle: (explain) => update({ explain }) }}>
+        {body}
+      </ExplainPref.Provider>
+    </LangContext.Provider>
+  );
 }

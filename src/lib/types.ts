@@ -12,7 +12,7 @@ export type Skill = 'add20' | 'sub20' | 'add' | 'sub' | 'carry' | 'borrow' | 'ti
 /** The underlying sum, e.g. 38 + 7 = 45. */
 export type Fact = { a: number; op: Op; b: number; c: number };
 
-export type Story = { emoji: string; text: string; ask: string };
+export type Story = { emoji: string; text: string; ask: string; textZh?: string; askZh?: string };
 
 export type Question = {
   id: string;

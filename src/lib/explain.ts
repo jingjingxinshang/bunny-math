@@ -1,3 +1,4 @@
+import type { Lang } from './i18n';
 import { compareSign, digit, opSymbol } from './generator';
 import type { ExplainStyle } from './storage';
 import type { Fact, Question } from './types';
@@ -440,28 +441,146 @@ export function questionText(q: Question): string {
   return `${a} ${s} ${b}`;
 }
 
-export function explain(q: Question, style: ExplainStyle = 'blocks'): Step[] {
+
+export function toZhCaption(s: string): string {
+  if (s.startsWith("Make *") && s.includes("with blocks")) {
+    return s.replace(/^Make \*(.*?)\* and \*(.*?)\* with blocks\.$/, "用积木摆出 *$1* 和 *$2*。");
+  }
+  if (s.startsWith("Put them together:")) {
+    return s.replace(/^Put them together:\s*\*(.*?)\*\s*ones\.$/, "合在一起：*$1* 个一。");
+  }
+  if (s.startsWith("Put the ones together:")) {
+    return s.replace(/^Put the ones together:\s*(.*)$/, "个位相加：$1");
+  }
+  if (s.includes("Circle *10 ones*")) return "圈出 *10个一*…";
+  if (s.includes("they turn into *1 ten*")) return "…满十进一，变成 *1个十*！";
+  if (s.includes("Circle *10 tens*")) return "圈出 *10个十*…";
+  if (s.includes("they turn into *1 hundred*")) return "…满十进一，变成 *1个百*！";
+  if (s.startsWith("Now the tens:")) return s.replace(/^Now the tens:\s*(.*)$/, "再算十位：$1");
+  if (s.startsWith("Now the hundreds:")) return s.replace(/^Now the hundreds:\s*(.*)$/, "再算百位：$1");
+  if (s.startsWith("Count them:")) return s.replace(/^Count them:\s*\*(.*?)\*!$/, "数一数，一共是：*$1*！");
+  if (s.startsWith("Start with *")) return s.replace(/^Start with \*(.*?)\*\.$/, "先摆出 *$1*。");
+  if (s.startsWith("Take away") && s.includes("and no tens!")) {
+    return s.replace(/^Take away (\d+) ones\? There are only \*(.*?)\*, and no tens!$/, "要减去 $1 个一？但只有 *$2* 个，十位也没有！");
+  }
+  if (s.startsWith("Take away") && s.includes("There are only")) {
+    return s.replace(/^Take away (\d+) ones\? There are only \*(.*?)\*!$/, "要减去 $1 个一？但只有 *$2* 个！");
+  }
+  if (s === "Break *1 hundred* into *10 tens*!") return "拆开 *1个百* 变成 *10个十*！";
+  if (s === "Now take *1 ten*…") return "现在取 *1个十*…";
+  if (s === "Break *1 ten* into *10 ones*!") return "拆开 *1个十* 变成 *10个一*！";
+  if (s.startsWith("Take away *")) {
+    return s.replace(/^Take away \*(.*?)\s+ones?\*\.$/, "减去 *$1个一*。")
+            .replace(/^Take away \*(.*?)\s+tens?\*\.$/, "减去 *$1个十*。")
+            .replace(/^Take away \*(.*?)\s+hundreds?\*\.$/, "减去 *$1个百*。");
+  }
+  if (s.includes("left. That's *")) {
+    return s.replace(/left\.\s*That's\s*\*(.*?)\*!/, "，还剩下 *$1*！")
+            .replace(/(\d+)\s+hundreds?/gi, "$1个百")
+            .replace(/(\d+)\s+tens?/gi, "$1个十")
+            .replace(/(\d+)\s+ones?/gi, "$1个一")
+            .replace(/,\s*/g, "、")
+            .replace(/\s+and\s+/g, "和");
+  }
+  if (s.includes("means") && s.includes("rows")) {
+    return s.replace(/^\*(.*?)\* means \*(.*?) rows\* of \*(.*?)\*\.$/, "*$1* 表示 *$2 行*，每行 *$3 个*。");
+  }
+  if (s.startsWith("Count by ")) {
+    return s.replace(/^Count by (\d+)s:\s*(.*)$/, "按 $1 个一组连加计数：$2");
+  }
+  if (s.startsWith("Share *") && s.includes("equal rows")) {
+    return s.replace(/^Share \*(.*?)\* into \*(.*?)\* equal rows\.$/, "把 *$1* 平均分成 *$2* 行。");
+  }
+  if (s.startsWith("Count each row:")) {
+    return s.replace(/^Count each row:\s*\*(.*?)\*\.$/, "每行有：*$1* 个。");
+  }
+  if (s.startsWith("Each row gets")) {
+    return s.replace(/^Each row gets \*(.*?)\*\.$/, "每行分得 *$1* 个。");
+  }
+  if (s === "Stack them up: *ones under ones*.") return "列竖式：*相同数位对齐*。";
+  if (s.startsWith("Put *") && s.includes("on top, with *")) {
+    return s.replace(/^Put \*(.*?)\* on top, with \*(.*?)\* under it\.$/, "上面写 *$1*，下面写 *$2*。");
+  }
+  if (s.startsWith("Ones:") || s.startsWith("Tens:") || s.startsWith("Hundreds:")) {
+    const prefix = s.startsWith("Ones:") ? "个位：" : s.startsWith("Tens:") ? "十位：" : "百位：";
+    const rest = s.slice(s.indexOf(":") + 1).trim();
+    if (rest.includes("Too small! Borrow 1 from next door:")) {
+      return prefix + rest.replace(/(.*?)\?\s*Too small!\s*Borrow 1 from next door:\s*\*(.*?)\*/, "$1 不够减！向十位借1当10：*$2*");
+    }
+    if (rest.includes("too small again! Borrow 1:")) {
+      return prefix + rest.replace(/too small again!\s*Borrow 1:\s*\*(.*?)\*/, "也不够减！向百位借1当10：*$1*");
+    }
+    if (rest.includes("the dot means 1 less.")) {
+      return prefix + rest.replace(/the dot means 1 less\.\s*\*(.*?)\*/, "借位点表示少1。*$1*");
+    }
+    if (rest.includes("Write") && rest.includes("carry")) {
+      return prefix + rest.replace(/\*(.*?)\*\.\s*Write (\d+),\s*carry (\d+)\./, "*$1*。写 $2 进 $3。");
+    }
+    if (rest.includes("Write")) {
+      return prefix + rest.replace(/\*(.*?)\*\.\s*Write (\d+)\./, "*$1*。写 $2。");
+    }
+    return prefix + rest;
+  }
+  if (s.startsWith("How many *") && s.includes("Start on the left")) {
+    return s.replace(/^How many \*(.*?)s\* in \*(.*?)\*\?\s*Start on the left\.$/, "*$2* 里面有几个 *$1*？从高位除起。");
+  }
+  if (s.includes("is less than") && s.includes("so look at")) {
+    return s.replace(/^(\d+) is less than (\d+), so look at \*(.*?)\*\.$/, "$1 比 $2 小，所以看前两位 *$3*。");
+  }
+  if (s.includes("÷") && s.includes("Write") && s.includes("on top")) {
+    return s.replace(/^(.*?) ÷ (.*?):\s*\*(.*?)\*\.\s*Write (\d+) on top\.$/, "$1 ÷ $2：*$3*。上面商 $4。");
+  }
+  if (s.includes("Bring down the")) {
+    return s.replace(/^(.*?) − (.*?) = (.*?)\.\s*Bring down the (.*?):\s*\*(.*?)\*\.$/, "$1 − $2 = $3。落下 $4：*$5*。");
+  }
+  if (s.includes("Nothing left over!")) {
+    return s.replace(/^(.*?) − (.*?) = \*0\*\.\s*Nothing left over!$/, "$1 − $2 = *0*。正好除尽！");
+  }
+  if (s === "Missing number? *Turn it around!*") return "找出填空的数字？*逆向换算！*";
+  if (s.startsWith("The missing number is *")) {
+    return s.replace(/^The missing number is \*(.*?)\*!$/, "填空的数字是 *$1*！");
+  }
+  if (s.includes("is smaller than")) return s.replace(/^\*(.*?)\* is smaller than \*(.*?)\*\.$/, "*$1* 小于 *$2*。");
+  if (s.includes("is bigger than")) return s.replace(/^\*(.*?)\* is bigger than \*(.*?)\*\.$/, "*$1* 大于 *$2*。");
+  if (s.includes("is the same as")) return s.replace(/^\*(.*?)\* is the same as \*(.*?)\*\.$/, "*$1* 等于 *$2*。");
+  if (s.includes(" = *")) {
+    return s.replace(/(\d+)\s+hundreds?/gi, "$1个百")
+            .replace(/(\d+)\s+tens?/gi, "$1个十")
+            .replace(/(\d+)\s+ones?/gi, "$1个一")
+            .replace(/,\s*/g, "、")
+            .replace(/\s+and\s+/g, "和");
+  }
+  return s;
+}
+
+
+export function explain(q: Question, style: ExplainStyle = 'blocks', lang: Lang = 'en'): Step[] {
+  let steps: Step[];
   if (q.kind === 'missing') {
     const f = inverse(q);
-    const steps = factSteps(f, style);
-    const last = steps[steps.length - 1];
-    return [
+    const rawSteps = factSteps(f, style);
+    const last = rawSteps[rawSteps.length - 1];
+    steps = [
       {
         scene: { type: 'text', lines: [questionText(q), `${f.a} ${sym(f.op)} ${f.b} = ?`] },
         caption: `Missing number? *Turn it around!*`,
       },
-      ...steps.slice(0, -1),
+      ...rawSteps.slice(0, -1),
       { ...last, caption: `The missing number is *${f.c}*!` },
     ];
+  } else {
+    steps = factSteps(q.fact, style);
+    if (q.kind === 'compare') {
+      const sign = compareSign(q.fact.c, q.than);
+      const words = { '<': 'smaller than', '>': 'bigger than', '=': 'the same as' }[sign];
+      steps.push({
+        scene: { type: 'text', lines: [`${q.fact.c} ${sign} ${q.than}`] },
+        caption: `*${q.fact.c}* is ${words} *${q.than}*.`,
+      });
+    }
   }
-  const steps = factSteps(q.fact, style);
-  if (q.kind === 'compare') {
-    const sign = compareSign(q.fact.c, q.than);
-    const words = { '<': 'smaller than', '>': 'bigger than', '=': 'the same as' }[sign];
-    steps.push({
-      scene: { type: 'text', lines: [`${q.fact.c} ${sign} ${q.than}`] },
-      caption: `*${q.fact.c}* is ${words} *${q.than}*.`,
-    });
+  if (lang === 'zh') {
+    return steps.map((s) => ({ ...s, caption: toZhCaption(s.caption) }));
   }
   return steps;
 }

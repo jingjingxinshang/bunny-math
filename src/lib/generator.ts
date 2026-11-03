@@ -237,30 +237,30 @@ export function makeFact(r: Rng, level: LevelId, op: Op = r.pick(opsFor(level)))
 type StoryFn = (a: number, b: number) => Story;
 const STORIES: Record<Op, StoryFn[]> = {
   '+': [
-    (a, b) => ({ emoji: '🐠', text: `${a} fish in the tank. ${b} more swim in.`, ask: 'How many now?' }),
-    (a, b) => ({ emoji: '🌸', text: `${a} flowers in the garden. ${b} more grow.`, ask: 'How many now?' }),
-    (a, b) => ({ emoji: '🍪', text: `${a} cookies in the jar. You bake ${b} more.`, ask: 'How many now?' }),
-    (a, b) => ({ emoji: '⭐', text: `You have ${a} stickers. You get ${b} more.`, ask: 'How many now?' }),
-    (a, b) => ({ emoji: '🐞', text: `${a} ladybugs on a leaf. ${b} more land.`, ask: 'How many now?' }),
+    (a, b) => ({ emoji: '🐠', text: `${a} fish in the tank. ${b} more swim in.`, ask: 'How many now?', textZh: `鱼缸里有 ${a} 条鱼，又游来了 ${b} 条。`, askZh: '现在一共有几条？' }),
+    (a, b) => ({ emoji: '🌸', text: `${a} flowers in the garden. ${b} more grow.`, ask: 'How many now?', textZh: `花园里有 ${a} 朵花，又开了 ${b} 朵。`, askZh: '现在一共有几朵？' }),
+    (a, b) => ({ emoji: '🍪', text: `${a} cookies in the jar. You bake ${b} more.`, ask: 'How many now?', textZh: `罐子里有 ${a} 块饼干，又烤了 ${b} 块。`, askZh: '现在一共有几块？' }),
+    (a, b) => ({ emoji: '⭐', text: `You have ${a} stickers. You get ${b} more.`, ask: 'How many now?', textZh: `你有 ${a} 张贴纸，又得到了 ${b} 张。`, askZh: '现在一共有几张？' }),
+    (a, b) => ({ emoji: '🐞', text: `${a} ladybugs on a leaf. ${b} more land.`, ask: 'How many now?', textZh: `树叶上有 ${a} 只瓢虫，又落下了 ${b} 只。`, askZh: '现在一共有几只？' }),
   ],
   '-': [
-    (a, b) => ({ emoji: '🍓', text: `${a} strawberries in a bowl. You eat ${b}.`, ask: 'How many are left?' }),
-    (a, b) => ({ emoji: '🎈', text: `${a} balloons at the party. ${b} go pop!`, ask: 'How many are left?' }),
-    (a, b) => ({ emoji: '🐦', text: `${a} birds in a tree. ${b} fly away.`, ask: 'How many are left?' }),
-    (a, b) => ({ emoji: '🧁', text: `${a} cupcakes on a plate. Friends eat ${b}.`, ask: 'How many are left?' }),
-    (a, b) => ({ emoji: '🦋', text: `${a} butterflies in the garden. ${b} fly off.`, ask: 'How many are left?' }),
+    (a, b) => ({ emoji: '🍓', text: `${a} strawberries in a bowl. You eat ${b}.`, ask: 'How many are left?', textZh: `碗里有 ${a} 颗草莓，你吃掉了 ${b} 颗。`, askZh: '还剩几颗草莓？' }),
+    (a, b) => ({ emoji: '🎈', text: `${a} balloons at the party. ${b} go pop!`, ask: 'How many are left?', textZh: `聚会上有 ${a} 个气球，爆了 ${b} 个。`, askZh: '还剩几个气球？' }),
+    (a, b) => ({ emoji: '🐦', text: `${a} birds in a tree. ${b} fly away.`, ask: 'How many are left?', textZh: `树上有 ${a} 只小鸟，飞走了 ${b} 只。`, askZh: '树上还剩几只小鸟？' }),
+    (a, b) => ({ emoji: '🧁', text: `${a} cupcakes on a plate. Friends eat ${b}.`, ask: 'How many are left?', textZh: `盘子里有 ${a} 个纸杯蛋糕，小朋友吃掉了 ${b} 个。`, askZh: '还剩几个蛋糕？' }),
+    (a, b) => ({ emoji: '🦋', text: `${a} butterflies in the garden. ${b} fly off.`, ask: 'How many are left?', textZh: `花园里有 ${a} 只蝴蝶，飞走了 ${b} 只。`, askZh: '还剩几只蝴蝶？' }),
   ],
   '×': [
-    (a, b) => ({ emoji: '🍪', text: `${a} plates with ${b} cookies on each.`, ask: 'How many cookies?' }),
-    (a, b) => ({ emoji: '🌷', text: `${a} pots with ${b} flowers in each.`, ask: 'How many flowers?' }),
-    (a, b) => ({ emoji: '🐰', text: `${a} bunnies each eat ${b} carrots.`, ask: 'How many carrots?' }),
-    (a, b) => ({ emoji: '🎁', text: `${a} bags with ${b} sweets in each.`, ask: 'How many sweets?' }),
+    (a, b) => ({ emoji: '🍪', text: `${a} plates with ${b} cookies on each.`, ask: 'How many cookies?', textZh: `有 ${a} 个盘子，每个盘子里有 ${b} 块饼干。`, askZh: '一共有几块饼干？' }),
+    (a, b) => ({ emoji: '🌷', text: `${a} pots with ${b} flowers in each.`, ask: 'How many flowers?', textZh: `有 ${a} 个花盆，每个花盆里有 ${b} 朵花。`, askZh: '一共有几朵花？' }),
+    (a, b) => ({ emoji: '🐰', text: `${a} bunnies each eat ${b} carrots.`, ask: 'How many carrots?', textZh: `有 ${a} 只小兔子，每只吃 ${b} 根胡萝卜。`, askZh: '一共吃了多少根胡萝卜？' }),
+    (a, b) => ({ emoji: '🎁', text: `${a} bags with ${b} sweets in each.`, ask: 'How many sweets?', textZh: `有 ${a} 个礼物袋，每个袋子里有 ${b} 颗糖果。`, askZh: '一共有多少颗糖果？' }),
   ],
   '÷': [
-    (a, b) => ({ emoji: '🍓', text: `${a} strawberries shared by ${b} friends.`, ask: 'How many each?' }),
-    (a, b) => ({ emoji: '🧁', text: `${a} cupcakes go in boxes of ${b}.`, ask: 'How many boxes?' }),
-    (a, b) => ({ emoji: '🐟', text: `${a} fish, with ${b} in each tank.`, ask: 'How many tanks?' }),
-    (a, b) => ({ emoji: '🌸', text: `${a} flowers in ${b} equal bunches.`, ask: 'How many in each?' }),
+    (a, b) => ({ emoji: '🍓', text: `${a} strawberries shared by ${b} friends.`, ask: 'How many each?', textZh: `${a} 颗草莓平均分给 ${b} 个小朋友。`, askZh: '每人分到几颗？' }),
+    (a, b) => ({ emoji: '🧁', text: `${a} cupcakes go in boxes of ${b}.`, ask: 'How many boxes?', textZh: `${a} 个蛋糕装盒，每盒装 ${b} 个。`, askZh: '一共需要几个盒子？' }),
+    (a, b) => ({ emoji: '🐟', text: `${a} fish, with ${b} in each tank.`, ask: 'How many tanks?', textZh: `${a} 条小鱼，每个鱼缸养 ${b} 条。`, askZh: '一共需要几个鱼缸？' }),
+    (a, b) => ({ emoji: '🌸', text: `${a} flowers in ${b} equal bunches.`, ask: 'How many in each?', textZh: `${a} 朵花平均分成 ${b} 束。`, askZh: '每束有几朵花？' }),
   ],
 };
 

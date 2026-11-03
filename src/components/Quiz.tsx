@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { smallBurst } from '../lib/celebrate';
 import { compareSign, correctAnswer, opSymbol } from '../lib/generator';
+import { getT, useLang } from '../lib/i18n';
 import { sounds } from '../lib/sound';
 import type { Answer, CompareSign, Question } from '../lib/types';
 import { Bunny, type Mood } from './Bunny';
@@ -11,8 +12,6 @@ export type QuizResult = { questions: Question[]; firstTry: Record<string, boole
 type Status = 'ask' | 'right' | 'wrong1' | 'wrong2';
 type Item = { q: Question; review: boolean };
 
-const ENCOURAGE = ['You can do it!', 'Take your time!', "Let's hop to it!", 'Think hard!', 'I believe in you!'];
-const CHEERS = ['Yes!', 'Great job!', 'You got it!', 'Super!', 'Hoppy-tastic!'];
 const SIGNS: CompareSign[] = ['<', '=', '>'];
 
 export function fullFact(q: Question) {
@@ -26,20 +25,20 @@ function shownAnswer(q: Question) {
   return q.kind === 'compare' ? fullFact(q) : String(ans);
 }
 
-function label(q: Question) {
+function label(q: Question, t: ReturnType<typeof getT>) {
   switch (q.kind) {
     case 'missing':
-      return 'Find the missing number!';
+      return t.prompts.missing;
     case 'choice':
-      return 'Pick the answer!';
+      return t.prompts.choice;
     case 'compare':
-      return 'Bigger, smaller, or the same?';
+      return t.prompts.compare;
     default:
-      return { '+': 'Add them up!', '-': 'Take away!', '×': 'Times!', '÷': 'Share it out!' }[q.fact.op];
+      return t.prompts[q.fact.op];
   }
 }
 
-function Prompt({ q, value, status }: { q: Question; value: string; status: Status }) {
+function Prompt({ q, value, status, isZh }: { q: Question; value: string; status: Status; isZh: boolean }) {
   const { a, op, b, c } = q.fact;
   const slotCls = `slot ${status === 'right' ? 'right' : status === 'wrong1' || status === 'wrong2' ? 'wrong' : 'typing'}`;
   const slot = <span class={slotCls}>{value}</span>;
@@ -47,14 +46,16 @@ function Prompt({ q, value, status }: { q: Question; value: string; status: Stat
   const eq = <span class="op">=</span>;
 
   if (q.kind === 'story') {
+    const text = isZh && q.story.textZh ? q.story.textZh : q.story.text;
+    const ask = isZh && q.story.askZh ? q.story.askZh : q.story.ask;
     return (
       <>
         <div class="story">
           <span class="story-pic" aria-hidden="true">{q.story.emoji}</span>
-          <p class="story-text">{q.story.text}</p>
+          <p class="story-text">{text}</p>
         </div>
         <div class="story-ask">
-          {q.story.ask} {slot}
+          {ask} {slot}
         </div>
       </>
     );
@@ -93,6 +94,9 @@ function Prompt({ q, value, status }: { q: Question; value: string; status: Stat
 }
 
 export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onDone: (r: QuizResult) => void; onQuit: () => void }) {
+  const { lang } = useLang();
+  const t = getT(lang);
+  const isZh = lang === 'zh';
   const [items, setItems] = useState<Item[]>(() => questions.map((q) => ({ q, review: false })));
   const [idx, setIdx] = useState(0);
   const [input, setInput] = useState('');
@@ -201,7 +205,14 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
   }, []);
 
   const mood: Mood = status === 'right' ? 'happy' : status === 'ask' ? 'normal' : 'think';
-  const bubble = status === 'right' ? CHEERS[idx % CHEERS.length] : status === 'ask' ? ENCOURAGE[idx % ENCOURAGE.length] : 'Hmm…';
+  const bubble =
+    status === 'right'
+      ? t.cheers[idx % t.cheers.length]
+      : status === 'ask'
+      ? t.encourage[idx % t.encourage.length]
+      : isZh
+      ? '想一想…'
+      : 'Hmm…';
   const mainCount = questions.length;
   const done = Math.min(idx, mainCount);
 
@@ -216,22 +227,22 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
             <li key={it.q.id} class={`${it.review ? 'review' : ''} ${outcomes[i] ?? ''} ${i === idx ? 'now' : ''}`} />
           ))}
         </ol>
-        <span class="count">{review ? 'Again!' : `${done + 1} / ${mainCount}`}</span>
+        <span class="count">{review ? (isZh ? '重练！' : 'Again!') : `${done + 1} / ${mainCount}`}</span>
       </header>
 
       <div class="quiz-body">
         <div class="q-pane">
           <div class="q-card" ref={cardRef}>
-            {review ? <span class="review-tag">One more try!</span> : <span class="tape" />}
+            {review ? <span class="review-tag">{isZh ? '再试一次！' : 'One more try!'}</span> : <span class="tape" />}
             <Bunny mood={mood} class={`peek ${status === 'right' ? 'bounce' : ''}`} key={`${idx}-${status}`}>
               <span class="bubble">{bubble}</span>
             </Bunny>
-            {q.kind !== 'story' && <p class="q-label">{label(q)}</p>}
-            <Prompt q={q} value={usesPad ? input : status === 'ask' ? '' : input} status={status} />
+            {q.kind !== 'story' && <p class="q-label">{label(q, t)}</p>}
+            <Prompt q={q} value={usesPad ? input : status === 'ask' ? '' : input} status={status} isZh={isZh} />
             {status === 'ask' && (
               <div class="hint-row">
                 <button class="puffy butter hint-btn" onClick={openHelp}>
-                  💡 Show me how
+                  {t.showMeHow}
                 </button>
               </div>
             )}
@@ -247,18 +258,18 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
                     {k}
                   </button>
                 ))}
-                <button class="puffy key side" aria-label="Delete" onClick={() => press('back')}>
+                <button class="puffy key side" aria-label={t.delete} onClick={() => press('back')}>
                   ⌫
                 </button>
                 <button class="puffy key" onClick={() => press('0')}>
                   0
                 </button>
                 <button class="puffy key side" onClick={() => press('clear')}>
-                  Clear
+                  {t.clear}
                 </button>
               </div>
               <button class="puffy berry check" disabled={!input || status !== 'ask'} onClick={() => submit(Number(input))}>
-                Check
+                {t.check}
               </button>
             </>
           )}
@@ -281,9 +292,9 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
                 const wrong = wrongPicks.includes(s);
                 const right = status === 'right' && s === answer;
                 return (
-                  <button key={s} class={`puffy choice ${wrong ? 'picked-wrong' : ''} ${right ? 'picked-right' : ''}`} disabled={wrong || status !== 'ask'} onClick={() => submit(s)} aria-label={{ '<': 'smaller than', '=': 'the same as', '>': 'bigger than' }[s]}>
+                  <button key={s} class={`puffy choice ${wrong ? 'picked-wrong' : ''} ${right ? 'picked-right' : ''}`} disabled={wrong || status !== 'ask'} onClick={() => submit(s)} aria-label={t.signs[s].label}>
                     {s}
-                    <small>{{ '<': 'smaller', '=': 'same', '>': 'bigger' }[s]}</small>
+                    <small>{t.signs[s].short}</small>
                   </button>
                 );
               })}
@@ -296,12 +307,12 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
         <div class="feedback good" role="status">
           <Bunny mood="happy" class="fb-face" />
           <div class="fb-text">
-            <p class="fb-title">{CHEERS[idx % CHEERS.length]} ⭐</p>
+            <p class="fb-title">{t.cheers[idx % t.cheers.length]} ⭐</p>
             <p class="fb-sub">{fullFact(q)}</p>
           </div>
           <div class="fb-actions">
             <button class="puffy mint" onClick={next} autoFocus>
-              {isLast ? 'See my stars!' : 'Next'}
+              {isLast ? t.seeStars : t.next}
             </button>
           </div>
         </div>
@@ -310,15 +321,15 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
         <div class="feedback bad" role="status">
           <Bunny mood="think" class="fb-face" />
           <div class="fb-text">
-            <p class="fb-title">So close!</p>
-            <p class="fb-sub">Have one more go.</p>
+            <p class="fb-title">{t.soClose}</p>
+            <p class="fb-sub">{t.haveOneMore}</p>
           </div>
           <div class="fb-actions">
             <button class="puffy butter" onClick={openHelp}>
-              💡 Show me how
+              {t.showMeHow}
             </button>
             <button class="puffy berry" onClick={tryAgain} autoFocus>
-              Try again
+              {t.tryAgain}
             </button>
           </div>
         </div>
@@ -327,15 +338,15 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
         <div class="feedback bad" role="status">
           <Bunny mood="think" class="fb-face" />
           <div class="fb-text">
-            <p class="fb-title">The answer is {shownAnswer(q)}</p>
-            <p class="fb-sub">{review ? "Let's look at how it works." : "We'll try it again at the end."}</p>
+            <p class="fb-title">{t.theAnswerIs(shownAnswer(q))}</p>
+            <p class="fb-sub">{review ? t.lookHowItWorks : t.tryAgainEnd}</p>
           </div>
           <div class="fb-actions">
             <button class="puffy butter" onClick={openHelp}>
-              💡 Show me how
+              {t.showMeHow}
             </button>
             <button class="puffy berry" onClick={next} autoFocus>
-              {isLast ? 'See my stars!' : 'Next'}
+              {isLast ? t.seeStars : t.next}
             </button>
           </div>
         </div>
@@ -345,16 +356,16 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
 
       {quitting && (
         <div class="scrim">
-          <div class="dialog" role="alertdialog" aria-modal="true" aria-label="Stop the quiz?">
+          <div class="dialog" role="alertdialog" aria-modal="true" aria-label={t.stopQuizTitle}>
             <Bunny mood="think" />
-            <h2>Stop the quiz?</h2>
-            <p>Your answers so far won't be saved.</p>
+            <h2>{t.stopQuizTitle}</h2>
+            <p>{t.stopQuizText}</p>
             <div class="dialog-actions">
               <button class="puffy" onClick={onQuit}>
-                Stop
+                {t.stop}
               </button>
               <button class="puffy berry" onClick={() => setQuitting(false)} autoFocus>
-                Keep going
+                {t.keepGoing}
               </button>
             </div>
           </div>

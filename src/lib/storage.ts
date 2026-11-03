@@ -1,3 +1,4 @@
+import type { Lang } from './i18n';
 import type { LevelId, Mode } from './types';
 
 /** How "Show me how" explains a sum: base-ten blocks, or the column method (竖式). */
@@ -15,22 +16,45 @@ export type Saved = {
   stickers: string[];
   /** Best star count per level. */
   best: Partial<Record<LevelId, number>>;
+  /** Current language. */
+  lang: Lang;
 };
 
 const KEY = 'bunny-math:v1';
-const DEFAULTS: Saved = { levelFor: { plus: 1, all: 11 }, explain: 'blocks', length: 15, sound: true, stickers: [], best: {} };
+
+function detectLang(): Lang {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.language && navigator.language.toLowerCase().startsWith('zh')) {
+      return 'zh';
+    }
+  } catch {
+    // fallback
+  }
+  return 'zh'; // Default to Chinese in Chinese locale context, switchable anytime
+}
+
+const DEFAULTS: Saved = {
+  levelFor: { plus: 1, all: 11 },
+  explain: 'blocks',
+  length: 15,
+  sound: true,
+  stickers: [],
+  best: {},
+  lang: detectLang(),
+};
 
 export function load(): Saved {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return { ...DEFAULTS };
+    if (!raw) return { ...DEFAULTS, lang: detectLang() };
     const { level, ...rest } = JSON.parse(raw);
     const saved: Saved = { ...DEFAULTS, ...rest };
+    if (!saved.lang) saved.lang = detectLang();
     // Saves from before modes existed kept a single add/take-away level.
     if (typeof level === 'number' && !rest.levelFor) saved.levelFor = { ...DEFAULTS.levelFor, plus: level as LevelId };
     return saved;
   } catch {
-    return { ...DEFAULTS };
+    return { ...DEFAULTS, lang: detectLang() };
   }
 }
 
